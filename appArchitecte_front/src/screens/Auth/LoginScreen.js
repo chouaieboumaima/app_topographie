@@ -10,13 +10,26 @@ import {
 import { TextInput, Button, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
+
 import { loginUser } from "../../services/authService";
+import api from "../../services/api";
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // 👁️ visibilité du mot de passe
+  const [showPassword, setShowPassword] = useState(false);
+
+  // ✅ Permission notifications
+  const registerForPushNotificationsAsync = async () => {
+    const { status } = await Notifications.requestPermissionsAsync();
+    if (status !== "granted") {
+      alert("Permission notifications refusée");
+      return false;
+    }
+    return true;
+  };
 
   const handleLogin = async () => {
     setLoading(true);
@@ -31,18 +44,43 @@ export default function LoginScreen({ navigation }) {
       const refreshToken = data.refresh_token || data.refresh;
 
       if (response.status === 200 && accessToken) {
+
+        // ✅ Sauvegarde tokens
         await AsyncStorage.setItem("access_token", accessToken);
         await AsyncStorage.setItem("refresh_token", refreshToken);
         await AsyncStorage.setItem("user_role", data.user?.role || "user");
 
+        // ✅ Notifications permission
+        const permissionGranted = await registerForPushNotificationsAsync();
+
+        if (permissionGranted) {
+          try {
+            // ✅ Get Expo push token
+            const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync();
+
+            console.log("EXPO TOKEN:", expoPushToken);
+
+            // ✅ Send token to backend
+            await api.post("/api/notifications/save-token", {
+              token: expoPushToken
+            });
+
+          } catch (notifError) {
+            console.log("Push token error:", notifError);
+          }
+        }
+
+        // ✅ Navigation
         if (data.user?.role === "admin") {
           navigation.replace("AdminDashboard");
         } else {
           navigation.replace("MainTabs");
         }
+
       } else {
         alert(data.error || "Erreur de connexion");
       }
+
     } catch (error) {
       console.log("LOGIN ERROR:", error.response?.data || error.message);
       alert(error.response?.data?.error || "Erreur connexion");

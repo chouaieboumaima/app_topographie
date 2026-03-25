@@ -1,5 +1,5 @@
 # routes/auth.py
-import re
+import re#Sert à vérifier des formats (email, mot de passe)
 import random
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify

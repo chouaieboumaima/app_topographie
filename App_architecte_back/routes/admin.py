@@ -3,9 +3,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from extensions import db
 from models import User,Project
 
-admin_bp = Blueprint("admin_bp", __name__)
+admin_bp = Blueprint("admin_bp", __name__)#Crée un module Flask pour toutes les routes admin.
 
-# 🔹 Vérification rôle admin
+#  Vérification rôle admin
 def admin_required():
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
@@ -24,7 +24,7 @@ def get_users():
         return jsonify({"error": "Accès interdit"}), 403
 
     users = User.query.all()
-
+#retourne une  liste json
     return jsonify([
         {
             "id": u.id,

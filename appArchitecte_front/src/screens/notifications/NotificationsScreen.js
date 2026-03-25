@@ -1,55 +1,63 @@
-import React, { useState } from "react";
-import { View, Text, FlatList, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import notificationService from "../../services/notificationService";
 
 export default function NotificationsScreen() {
 
-  const [notifications] = useState([
-    {
-      id: "1",
-      title: "File cleaned successfully",
-      message: "scan_01.las has been cleaned",
-      time: "2 minutes ago",
-      icon: "check-circle",
-      color: "#4CAF50"
-    },
-    {
-      id: "2",
-      title: "Processing started",
-      message: "scan_02.las is processing",
-      time: "10 minutes ago",
-      icon: "autorenew",
-      color: "#2196F3"
-    },
-    {
-      id: "3",
-      title: "Processing error",
-      message: "scan_03.las failed to process",
-      time: "1 hour ago",
-      icon: "error",
-      color: "#F44336"
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Calcul du nombre de notifications non lues
+  const unreadCount = notifications.filter(n => n.is_read === false).length;
+
+  const loadNotifications = async () => {
+    try {
+      const data = await notificationService.getNotifications();
+      setNotifications(data);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    loadNotifications();
+  }, []);
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <MaterialIcons name={item.icon} size={28} color={item.color} />
+      <MaterialIcons
+        name={item.is_read ? "check-circle" : "notifications"}
+        size={28}
+        color={item.is_read ? "#4CAF50" : "#2196F3"}
+      />
 
       <View style={styles.textContainer}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.message}>{item.message}</Text>
-        <Text style={styles.time}>{item.time}</Text>
       </View>
     </View>
   );
 
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Notifications</Text>
+      <Text style={styles.header}>
+        Notifications ({unreadCount})
+      </Text>
 
       <FlatList
         data={notifications}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         renderItem={renderItem}
       />
     </View>
@@ -57,48 +65,36 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-
   container: {
     flex: 1,
-    backgroundColor: "#F5F6FA",
-    padding: 20
+    padding: 16,
   },
-
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   header: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 20
+    marginBottom: 10,
   },
-
   card: {
     flexDirection: "row",
-    backgroundColor: "white",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 12,
+    padding: 12,
+    marginBottom: 10,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    elevation: 2,
     alignItems: "center",
-    elevation: 3
   },
-
   textContainer: {
-    marginLeft: 12,
-    flex: 1
+    marginLeft: 10,
   },
-
   title: {
-    fontSize: 16,
-    fontWeight: "600"
+    fontWeight: "bold",
   },
-
   message: {
-    fontSize: 14,
-    color: "gray"
+    color: "#555",
   },
-
-  time: {
-    fontSize: 12,
-    color: "#999",
-    marginTop: 4
-  }
-
 });

@@ -47,7 +47,7 @@ export default function BottomTabs() {
       <Tab.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{ tabBarBadge: notificationCount > 0 ? notificationCount : null }}
+        options={{ tabBarBadge: unreadCount > 0 ? unreadCount : null }}
       />
       <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Settings" component={SettingsScreen} />

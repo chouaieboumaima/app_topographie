@@ -4,7 +4,7 @@ from models import Project, User
 from extensions import db
 from services.s3_service import upload_file_to_s3
 from services.ai_service import call_ai_pipeline
-from services.notification import send_notification
+from services.notification_service import send_notification
 
 file_bp = Blueprint("file_bp", __name__)
 

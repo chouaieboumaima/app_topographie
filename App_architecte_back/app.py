@@ -1,6 +1,6 @@
 from flask import Flask
 from config import Config
-from extensions import db, jwt,mail
+from extensions import db, jwt,mail,migrate
 from flask_cors import CORS
 
 def create_app():
@@ -10,6 +10,7 @@ def create_app():
     db.init_app(app)
     jwt.init_app(app)
     mail.init_app(app)
+    migrate.init_app(app, db)
     # Import Blueprints
     from routes.auth import auth_bp
     from routes.admin import admin_bp
@@ -20,6 +21,8 @@ def create_app():
     app.register_blueprint(project_bp, url_prefix="/api/projects")
     from routes.files import file_bp  
     app.register_blueprint(file_bp, url_prefix="/api/files")
+    from routes.notification_routes import notif_bp
+    app.register_blueprint(notif_bp, url_prefix="/api")
     @app.route("/")
     def home():
         return "Backend is running 🚀"
