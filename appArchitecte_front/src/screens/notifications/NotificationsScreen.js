@@ -4,25 +4,25 @@ import { MaterialIcons } from "@expo/vector-icons";
 import notificationService from "../../services/notificationService";
 
 export default function NotificationsScreen() {
-
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // ✅ Calcul du nombre de notifications non lues
-  const unreadCount = notifications.filter(n => n.is_read === false).length;
-
-  const loadNotifications = async () => {
-    try {
-      const data = await notificationService.getNotifications();
-      setNotifications(data);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const data = await notificationService.getNotifications();
+        setNotifications(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.log("Erreur notifications:", err);
+        setNotifications([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadNotifications();
   }, []);
 
@@ -33,68 +33,55 @@ export default function NotificationsScreen() {
         size={28}
         color={item.is_read ? "#4CAF50" : "#2196F3"}
       />
-
       <View style={styles.textContainer}>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.message}>{item.message}</Text>
+        <Text style={styles.time}>{item.time}</Text>
       </View>
     </View>
   );
 
-  if (loading) {
+  if (loading)
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" />
       </View>
     );
-  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>
-        Notifications ({unreadCount})
-      </Text>
+      {/* ✅ Directement la variable, jamais this.unreadCount */}
+      <Text style={styles.header}>Notifications ({unreadCount})</Text>
 
-      <FlatList
-        data={notifications}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={renderItem}
-      />
+      {notifications.length === 0 ? (
+        <Text style={styles.empty}>Aucune notification</Text>
+      ) : (
+        <FlatList
+          data={notifications}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderItem}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
-  loader: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  header: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
+  container: { flex: 1, padding: 16, backgroundColor: "#F5F5F5" },
+  loader: { flex: 1, justifyContent: "center", alignItems: "center" },
+  header: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
+  empty: { textAlign: "center", marginTop: 20, color: "#777" },
   card: {
     flexDirection: "row",
     padding: 12,
     marginBottom: 10,
     backgroundColor: "#fff",
-    borderRadius: 8,
-    elevation: 2,
+    borderRadius: 10,
+    elevation: 3,
     alignItems: "center",
   },
-  textContainer: {
-    marginLeft: 10,
-  },
-  title: {
-    fontWeight: "bold",
-  },
-  message: {
-    color: "#555",
-  },
+  textContainer: { marginLeft: 10, flex: 1 },
+  title: { fontWeight: "bold", fontSize: 14 },
+  message: { color: "#555", marginTop: 2 },
+  time: { fontSize: 12, color: "#999", marginTop: 4 },
 });

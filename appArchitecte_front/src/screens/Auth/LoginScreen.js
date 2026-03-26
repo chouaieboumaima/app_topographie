@@ -11,9 +11,10 @@ import { TextInput, Button, Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
-
-import { loginUser } from "../../services/authService";
+import Constants from "expo-constants";
 import api from "../../services/api";
+import { loginUser } from "../../services/authService";
+import notificationService from "../../services/notificationService"; // ✅ Import ajouté
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
@@ -21,7 +22,7 @@ export default function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ Permission notifications
+  // ✅ Demande la permission pour les notifications
   const registerForPushNotificationsAsync = async () => {
     const { status } = await Notifications.requestPermissionsAsync();
     if (status !== "granted") {
@@ -33,44 +34,40 @@ export default function LoginScreen({ navigation }) {
 
   const handleLogin = async () => {
     setLoading(true);
-
     try {
       const response = await loginUser({ email, password });
       const data = response.data;
 
-      console.log("LOGIN RESPONSE:", data);
+      if (response.status === 200 && (data.access_token || data.token)) {
+        const accessToken = data.access_token || data.token;
+        const refreshToken = data.refresh_token || data.refresh;
 
-      const accessToken = data.access_token || data.token;
-      const refreshToken = data.refresh_token || data.refresh;
-
-      if (response.status === 200 && accessToken) {
-
-        // ✅ Sauvegarde tokens
+        // ✅ Sauvegarde tokens localement
         await AsyncStorage.setItem("access_token", accessToken);
         await AsyncStorage.setItem("refresh_token", refreshToken);
         await AsyncStorage.setItem("user_role", data.user?.role || "user");
 
-        // ✅ Notifications permission
+        // ✅ Permission notifications
         const permissionGranted = await registerForPushNotificationsAsync();
 
         if (permissionGranted) {
           try {
-            // ✅ Get Expo push token
-            const { data: expoPushToken } = await Notifications.getExpoPushTokenAsync();
+            // ✅ Récupère token Expo avec projectId pour bare workflow
+            const tokenData = await Notifications.getExpoPushTokenAsync({
+              projectId: Constants.expoConfig?.extra?.eas?.projectId || "YOUR_PROJECT_ID",
+            });
+            const expoPushToken = tokenData.data;
 
             console.log("EXPO TOKEN:", expoPushToken);
 
-            // ✅ Send token to backend
-            await api.post("/api/notifications/save-token", {
-              token: expoPushToken
-            });
-
+            // ✅ Envoie token au backend
+            await notificationService.saveToken(expoPushToken);
           } catch (notifError) {
             console.log("Push token error:", notifError);
           }
         }
 
-        // ✅ Navigation
+        // ✅ Navigation selon rôle utilisateur
         if (data.user?.role === "admin") {
           navigation.replace("AdminDashboard");
         } else {
@@ -111,23 +108,9 @@ export default function LoginScreen({ navigation }) {
           keyboardType="email-address"
           autoCapitalize="none"
           theme={{
-            colors: {
-              text: "#fff",
-              primary: "#888",
-              background: "rgba(255,255,255,0.1)",
-            },
+            colors: { text: "#fff", primary: "#888", background: "rgba(255,255,255,0.1)" },
           }}
-          left={
-            <TextInput.Icon
-              icon={() => (
-                <MaterialCommunityIcons
-                  name="email-outline"
-                  size={24}
-                  color="#fff"
-                />
-              )}
-            />
-          }
+          left={<TextInput.Icon icon={() => <MaterialCommunityIcons name="email-outline" size={24} color="#fff" />} />}
         />
 
         {/* Password */}
@@ -139,32 +122,12 @@ export default function LoginScreen({ navigation }) {
           style={styles.input}
           secureTextEntry={!showPassword}
           theme={{
-            colors: {
-              text: "#fff",
-              primary: "#888",
-              background: "rgba(255,255,255,0.1)",
-            },
+            colors: { text: "#fff", primary: "#888", background: "rgba(255,255,255,0.1)" },
           }}
-          left={
-            <TextInput.Icon
-              icon={() => (
-                <MaterialCommunityIcons
-                  name="lock-outline"
-                  size={24}
-                  color="#fff"
-                />
-              )}
-            />
-          }
+          left={<TextInput.Icon icon={() => <MaterialCommunityIcons name="lock-outline" size={24} color="#fff" />} />}
           right={
             <TextInput.Icon
-              icon={() => (
-                <MaterialCommunityIcons
-                  name={showPassword ? "eye-off-outline" : "eye-outline"}
-                  size={24}
-                  color="#fff"
-                />
-              )}
+              icon={() => <MaterialCommunityIcons name={showPassword ? "eye-off-outline" : "eye-outline"} size={24} color="#fff" />}
               onPress={() => setShowPassword(!showPassword)}
             />
           }
@@ -184,13 +147,8 @@ export default function LoginScreen({ navigation }) {
         </Button>
 
         {/* Mot de passe oublié */}
-        <TouchableOpacity
-          style={{ alignSelf: "center", marginTop: 10 }}
-          onPress={() => navigation.navigate("ForgotPassword")}
-        >
-          <Text style={{ color: "#fff", textDecorationLine: "underline" }}>
-            Mot de passe oublié ?
-          </Text>
+        <TouchableOpacity style={{ alignSelf: "center", marginTop: 10 }} onPress={() => navigation.navigate("ForgotPassword")}>
+          <Text style={{ color: "#fff", textDecorationLine: "underline" }}>Mot de passe oublié ?</Text>
         </TouchableOpacity>
 
         {/* Register */}
@@ -208,46 +166,13 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.25)",
-  },
-  container: {
-    flex: 1,
-    justifyContent: "flex-end",
-    paddingHorizontal: 30,
-    paddingBottom: 50,
-  },
-  input: {
-    marginBottom: 20,
-    borderRadius: 12,
-  },
-  button: {
-    borderRadius: 12,
-    marginTop: 10,
-    backgroundColor: "#333",
-  },
-  registerContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 15,
-  },
-  registerTextPrompt: {
-    color: "#ccc",
-  },
-  registerText: {
-    color: "#fff",
-    textDecorationLine: "underline",
-  },
-  footerText: {
-    color: "#aaa",
-    textAlign: "center",
-    marginTop: 40,
-    fontSize: 12,
-  },
+  background: { flex: 1, width: "100%", height: "100%" },
+  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.25)" },
+  container: { flex: 1, justifyContent: "flex-end", paddingHorizontal: 30, paddingBottom: 50 },
+  input: { marginBottom: 20, borderRadius: 12 },
+  button: { borderRadius: 12, marginTop: 10, backgroundColor: "#333" },
+  registerContainer: { flexDirection: "row", justifyContent: "center", marginTop: 15 },
+  registerTextPrompt: { color: "#ccc" },
+  registerText: { color: "#fff", textDecorationLine: "underline" },
+  footerText: { color: "#aaa", textAlign: "center", marginTop: 40, fontSize: 12 },
 });
