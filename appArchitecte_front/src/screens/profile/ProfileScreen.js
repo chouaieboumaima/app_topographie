@@ -373,7 +373,8 @@ backgroundColor:"#F9FAFB"
 input:{
 flex:1,
 padding:12,
-fontSize:16
+fontSize:16,
+color:"#000"
 },
 
 updateButton:{

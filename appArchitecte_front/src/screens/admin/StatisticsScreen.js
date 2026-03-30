@@ -1,5 +1,5 @@
 import React from "react";
-import { ScrollView, StyleSheet, Dimensions } from "react-native";
+import { ScrollView, Dimensions, StyleSheet } from "react-native";
 import { Text, Card } from "react-native-paper";
 import { LineChart, PieChart } from "react-native-chart-kit";
 
@@ -37,8 +37,8 @@ export default function StatisticsScreen({ stats }) {
             width={screenWidth}
             height={200}
             chartConfig={{
-              backgroundGradientFrom: "#ffffff",
-              backgroundGradientTo: "#ffffff",
+              backgroundGradientFrom: "#fff",
+              backgroundGradientTo: "#fff",
               color: (opacity = 1) => `rgba(31,31,31,${opacity})`,
               labelColor: () => "#6b7280",
               propsForDots: { r: "5", strokeWidth: "2", stroke: "#c7a17a" }
@@ -53,11 +53,7 @@ export default function StatisticsScreen({ stats }) {
 }
 
 const styles = StyleSheet.create({
-  chartCard: {
-    borderRadius: 20, backgroundColor: "#ffffff", marginBottom: 22, paddingVertical: 18, paddingHorizontal: 10,
-    shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 6 },
-    elevation: 3, borderWidth: 1, borderColor: "#f2f2f2"
-  },
+  chartCard: { borderRadius: 20, backgroundColor: "#fff", marginBottom: 22, paddingVertical: 18, paddingHorizontal: 10, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 3, borderWidth: 1, borderColor: "#f2f2f2" },
   chartTitle: { fontSize: 16, fontWeight: "600", color: "#1f1f1f", marginBottom: 15, textAlign: "center" },
   chartStyle: { borderRadius: 14 }
 });

@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import notificationService from "../../services/notificationService";
 
@@ -7,7 +14,6 @@ export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Calcul du nombre de notifications non lues
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   useEffect(() => {
@@ -22,14 +28,28 @@ export default function NotificationsScreen() {
         setLoading(false);
       }
     };
-
     loadNotifications();
   }, []);
 
+  const toggleRead = (id) => {
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === id ? { ...n, is_read: !n.is_read } : n
+      )
+    );
+  };
+
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
+    <TouchableOpacity
+      style={[
+        styles.card,
+        { backgroundColor: item.is_read ? "#F0F0F0" : "#E3F2FD" },
+      ]}
+      onPress={() => toggleRead(item.id)}
+      activeOpacity={0.8}
+    >
       <MaterialIcons
-        name={item.is_read ? "check-circle" : "notifications"}
+        name={item.is_read ? "check-circle" : "notifications-active"}
         size={28}
         color={item.is_read ? "#4CAF50" : "#2196F3"}
       />
@@ -38,20 +58,22 @@ export default function NotificationsScreen() {
         <Text style={styles.message}>{item.message}</Text>
         <Text style={styles.time}>{item.time}</Text>
       </View>
-    </View>
+      {!item.is_read && <View style={styles.unreadBadge} />}
+    </TouchableOpacity>
   );
 
   if (loading)
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#2196F3" />
       </View>
     );
 
   return (
     <View style={styles.container}>
-      {/* ✅ Directement la variable, jamais this.unreadCount */}
-      <Text style={styles.header}>Notifications ({unreadCount})</Text>
+      <Text style={styles.header}>
+        Notifications <Text style={styles.unreadCount}>({unreadCount})</Text>
+      </Text>
 
       {notifications.length === 0 ? (
         <Text style={styles.empty}>Aucune notification</Text>
@@ -60,6 +82,7 @@ export default function NotificationsScreen() {
           data={notifications}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 20 }}
         />
       )}
     </View>
@@ -67,21 +90,32 @@ export default function NotificationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#F5F5F5" },
+  container: { flex: 1, padding: 16, backgroundColor: "#FAFAFA" },
   loader: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
-  empty: { textAlign: "center", marginTop: 20, color: "#777" },
+  header: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
+  unreadCount: { color: "#2196F3" },
+  empty: { textAlign: "center", marginTop: 30, color: "#888", fontSize: 16 },
   card: {
     flexDirection: "row",
-    padding: 12,
+    padding: 16,
     marginBottom: 10,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    elevation: 3,
+    borderRadius: 12,
+    elevation: 2,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
-  textContainer: { marginLeft: 10, flex: 1 },
-  title: { fontWeight: "bold", fontSize: 14 },
-  message: { color: "#555", marginTop: 2 },
-  time: { fontSize: 12, color: "#999", marginTop: 4 },
+  textContainer: { marginLeft: 12, flex: 1 },
+  title: { fontWeight: "bold", fontSize: 16, color: "#333" },
+  message: { color: "#555", marginTop: 4, fontSize: 14 },
+  time: { fontSize: 12, color: "#999", marginTop: 6 },
+  unreadBadge: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#2196F3",
+    marginLeft: 8,
+  },
 });

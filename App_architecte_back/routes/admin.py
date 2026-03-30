@@ -1,11 +1,11 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from extensions import db
-from models import User,Project
+from models import User, Project
 
-admin_bp = Blueprint("admin_bp", __name__)#Crée un module Flask pour toutes les routes admin.
+admin_bp = Blueprint("admin_bp", __name__)
 
-#  Vérification rôle admin
+# 🔐 Vérification rôle admin
 def admin_required():
     current_user_id = get_jwt_identity()
     user = User.query.get(current_user_id)
@@ -15,7 +15,7 @@ def admin_required():
     return user
 
 
-# 🔹 Lister tous les utilisateurs
+# 🔹 Lister uniquement les utilisateurs (sans admin)
 @admin_bp.route("/users", methods=["GET"])
 @jwt_required()
 def get_users():
@@ -23,8 +23,9 @@ def get_users():
     if not admin_required():
         return jsonify({"error": "Accès interdit"}), 403
 
-    users = User.query.all()
-#retourne une  liste json
+    # ✅ EXCLURE les admins
+    users = User.query.filter(User.role != "admin").all()
+
     return jsonify([
         {
             "id": u.id,
@@ -45,8 +46,13 @@ def activate_user(user_id):
         return jsonify({"error": "Accès interdit"}), 403
 
     user = User.query.get(user_id)
+
     if not user:
         return jsonify({"error": "Utilisateur non trouvé"}), 404
+
+    # 🔒 Empêcher modification admin
+    if user.role == "admin":
+        return jsonify({"error": "Impossible de modifier un admin"}), 403
 
     user.is_active = True
     db.session.commit()
@@ -63,8 +69,13 @@ def deactivate_user(user_id):
         return jsonify({"error": "Accès interdit"}), 403
 
     user = User.query.get(user_id)
+
     if not user:
         return jsonify({"error": "Utilisateur non trouvé"}), 404
+
+    # 🔒 Protection admin
+    if user.role == "admin":
+        return jsonify({"error": "Impossible de modifier un admin"}), 403
 
     user.is_active = False
     db.session.commit()
@@ -81,8 +92,13 @@ def delete_user(user_id):
         return jsonify({"error": "Accès interdit"}), 403
 
     user = User.query.get(user_id)
+
     if not user:
         return jsonify({"error": "Utilisateur non trouvé"}), 404
+
+    # 🔒 Protection admin
+    if user.role == "admin":
+        return jsonify({"error": "Impossible de supprimer un admin"}), 403
 
     db.session.delete(user)
     db.session.commit()
@@ -90,18 +106,24 @@ def delete_user(user_id):
     return jsonify({"message": "Compte supprimé"})
 
 
-
-# 🔹 GET /stats
+# 🔹 Statistiques
 @admin_bp.route("/stats", methods=["GET"])
 @jwt_required()
 def admin_stats():
-    user = admin_required()
-    if isinstance(user, tuple):
-        return user
 
-    total_users = User.query.count()
-    active_users = User.query.filter_by(is_active=True).count()
-    inactive_users = User.query.filter_by(is_active=False).count()
+    if not admin_required():
+        return jsonify({"error": "Accès interdit"}), 403
+
+    total_users = User.query.filter(User.role != "admin").count()
+    active_users = User.query.filter(
+        User.role != "admin",
+        User.is_active == True
+    ).count()
+    inactive_users = User.query.filter(
+        User.role != "admin",
+        User.is_active == False
+    ).count()
+
     total_projects = Project.query.count()
 
     return jsonify({

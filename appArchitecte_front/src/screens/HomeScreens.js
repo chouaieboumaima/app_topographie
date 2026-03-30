@@ -1,25 +1,47 @@
-import React from "react";
+// src/screens/home/HomeScreen.js
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
   Image,
   SafeAreaView,
-  TouchableOpacity,
+  ScrollView,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
+import projectService from "../services/projectService";
+import { useIsFocused } from "@react-navigation/native";
 
 export default function HomeScreen() {
+  const [projectsCount, setProjectsCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const isFocused = useIsFocused(); // recharge à chaque focus de l'écran
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      setLoading(true);
+      try {
+        const data = await projectService.getProjects();
+        setProjectsCount(data.length);
+      } catch (err) {
+        console.log("Erreur fetchProjects:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isFocused) fetchProjects();
+  }, [isFocused]);
+
   const stats = [
-    { title: "Projects", value: 12, icon: "folder" },
-    { title: "Clouds", value: 35, icon: "cloud" },
-    { title: "Cleaned", value: 20, icon: "check-circle" },
-    { title: "Processing", value: 3, icon: "autorenew" },
+    { title: "Projets", value: projectsCount, icon: "folder" },
+    { title: "Nuages", value: 35, icon: "cloud" },      // Valeurs fixes pour l'instant
+    { title: "Nettoyés", value: 20, icon: "check-circle" },
+    { title: "En cours", value: 3, icon: "autorenew" },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
-
       {/* HEADER */}
       <View style={styles.header}>
         <View>
@@ -37,21 +59,20 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* CENTER */}
-      <View style={styles.centerContainer}>
+      {/* STATS */}
+      <ScrollView contentContainerStyle={styles.centerContainer}>
         <View style={styles.statsContainer}>
           {stats.map((item, index) => (
             <View key={index} style={styles.card}>
               <View style={styles.iconContainer}>
                 <MaterialIcons name={item.icon} size={28} color="#2F4858" />
               </View>
-              <Text style={styles.value}>{item.value}</Text>
+              <Text style={styles.value}>{loading ? "..." : item.value}</Text>
               <Text style={styles.label}>{item.title}</Text>
             </View>
           ))}
         </View>
-      </View>
-
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -66,6 +87,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 30,
     marginBottom: 30,
   },
   welcome: {
@@ -86,7 +108,7 @@ const styles = StyleSheet.create({
     borderColor: "#E5E7EB",
   },
   centerContainer: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: "center",
   },
   statsContainer: {

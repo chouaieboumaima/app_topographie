@@ -233,12 +233,12 @@ export default function ProjectsScreen({ navigation }) {
                     });
                   }}
                 >
-                  <Text style={styles.detailText}>Voir fichiers</Text>
+                  <Text style={styles.detailText}>Consulter mes nuages</Text>
                 </TouchableOpacity>
 
                 {/* MODIFIER */}
                 <TouchableOpacity
-                  style={[styles.detailButton, { backgroundColor: "#FFA500" }]}
+                  style={[styles.detailButton, { backgroundColor: "#7a5716" }]}
                   onPress={() => {
                     setEditingProject(selectedProject);
                     setName(selectedProject.name);
@@ -253,7 +253,7 @@ export default function ProjectsScreen({ navigation }) {
 
                 {/* SUPPRIMER */}
                 <TouchableOpacity
-                  style={[styles.detailButton, { backgroundColor: "#FF4D4D" }]}
+                  style={[styles.detailButton, { backgroundColor: "#8f4c4c" }]}
                   onPress={()=>deleteProject(selectedProject.id)}
                 >
                   <Text style={styles.detailText}>Supprimer</Text>
@@ -279,7 +279,7 @@ export default function ProjectsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container:{flex:1, backgroundColor:"#F6F8FB", paddingHorizontal:20},
-  header:{flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginTop:10, marginBottom:25},
+  header:{flexDirection:"row", justifyContent:"space-between", alignItems:"center", marginTop:30, marginBottom:30},
   title:{fontSize:28, fontWeight:"700", color:"#2F4858"},
   counter:{marginTop:4, fontSize:14, color:"#8A97A6"},
   card:{flexDirection:"row", alignItems:"center", backgroundColor:"#FFFFFF", padding:18, borderRadius:18, marginBottom:16, borderLeftWidth:4, borderLeftColor:"#2F4858", shadowColor:"#000", shadowOpacity:0.07, shadowRadius:12, shadowOffset:{width:0,height:6}, elevation:5},
@@ -289,9 +289,9 @@ const styles = StyleSheet.create({
   subtitle:{fontSize:13,color:"#8A97A6", marginTop:3},
   fab:{position:"absolute", bottom:30, right:25, backgroundColor:"#2F4858", padding:18, borderRadius:30, shadowColor:"#000", shadowOpacity:0.25, shadowRadius:10, shadowOffset:{width:0,height:5}, elevation:8},
   modalOverlay:{flex:1, backgroundColor:"rgba(0,0,0,0.4)", justifyContent:"center", alignItems:"center", paddingHorizontal:15},
-  modalContainer:{width:"90%", backgroundColor:"#fff", borderRadius:22, padding:20, shadowColor:"#000", shadowOpacity:0.25, shadowRadius:15, shadowOffset:{width:0,height:6}, elevation:10},
+  modalContainer:{width:"100%", backgroundColor:"#fff", borderRadius:22, padding:20, shadowColor:"#000", shadowOpacity:0.25, shadowRadius:15, shadowOffset:{width:0,height:6}, elevation:10},
   addTitle:{fontSize:20, fontWeight:"700", color:"#2F4858", marginBottom:20, textAlign:"center"},
-  input:{backgroundColor:"#fff", borderRadius:14, padding:14, fontSize:16, borderWidth:1, borderColor:"#E5E7EB", marginBottom:15, shadowColor:"#000", shadowOpacity:0.05, shadowRadius:6, shadowOffset:{width:0,height:3}, elevation:3},
+  input:{  color:"#000",backgroundColor:"#ffff", borderRadius:14, padding:14, fontSize:16, borderWidth:1, borderColor:"#E5E7EB", marginBottom:15, shadowColor:"#000", shadowOpacity:0.05, shadowRadius:6, shadowOffset:{width:0,height:3}, elevation:3},
   label:{fontSize:14, fontWeight:"600", color:"#6B7A8F", marginBottom:6},
   statusContainer:{flexDirection:"row", marginBottom:15},
   statusButton:{paddingVertical:10, paddingHorizontal:16, borderRadius:18, backgroundColor:"#E5E7EB", marginRight:12},
