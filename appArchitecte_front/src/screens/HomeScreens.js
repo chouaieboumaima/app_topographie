@@ -7,14 +7,23 @@ import {
   Image,
   SafeAreaView,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 import projectService from "../services/projectService";
 import { useIsFocused } from "@react-navigation/native";
 
 export default function HomeScreen() {
-  const [projectsCount, setProjectsCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    projets: 0,
+    nuages: 35,      // valeur fixe si tu veux
+    nettoyes: 20,    // valeur fixe si tu veux
+    enCours: 0,
+    termines: 0,
+    enAttente: 0,
+  });
+
   const isFocused = useIsFocused(); // recharge à chaque focus de l'écran
 
   useEffect(() => {
@@ -22,7 +31,27 @@ export default function HomeScreen() {
       setLoading(true);
       try {
         const data = await projectService.getProjects();
-        setProjectsCount(data.length);
+
+        const statusCounts = {
+          "En cours": 0,
+          Terminé: 0,
+          "En attente": 0,
+        };
+
+        data.forEach((p) => {
+          if (statusCounts[p.status] !== undefined) {
+            statusCounts[p.status] += 1;
+          }
+        });
+
+        setStats({
+          projets: data.length,
+          nuages: 35,
+          nettoyes: 20,
+          enCours: statusCounts["En cours"] || 0,
+          termines: statusCounts["Terminé"] || 0,
+          enAttente: statusCounts["En attente"] || 0,
+        });
       } catch (err) {
         console.log("Erreur fetchProjects:", err);
       } finally {
@@ -33,16 +62,18 @@ export default function HomeScreen() {
     if (isFocused) fetchProjects();
   }, [isFocused]);
 
-  const stats = [
-    { title: "Projets", value: projectsCount, icon: "folder" },
-    { title: "Nuages", value: 35, icon: "cloud" },      // Valeurs fixes pour l'instant
-    { title: "Nettoyés", value: 20, icon: "check-circle" },
-    { title: "En cours", value: 3, icon: "autorenew" },
+  const statItems = [
+    { title: "Projets", value: stats.projets, icon: "folder" },
+    { title: "Nuages", value: stats.nuages, icon: "cloud" },
+    { title: "Nettoyés", value: stats.nettoyes, icon: "check-circle" },
+    { title: "En cours", value: stats.enCours, icon: "autorenew" },
+    { title: "Terminés", value: stats.termines, icon: "check-circle" },
+    { title: "En attente", value: stats.enAttente, icon: "hourglass-empty" },
   ];
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* HEADER */}
+      {/* HEADER */}000000000000000000000000
       <View style={styles.header}>
         <View>
           <Text style={styles.welcome}>Bienvenue Architecte</Text>
@@ -60,19 +91,23 @@ export default function HomeScreen() {
       </View>
 
       {/* STATS */}
-      <ScrollView contentContainerStyle={styles.centerContainer}>
-        <View style={styles.statsContainer}>
-          {stats.map((item, index) => (
-            <View key={index} style={styles.card}>
-              <View style={styles.iconContainer}>
-                <MaterialIcons name={item.icon} size={28} color="#2F4858" />
+      {loading ? (
+        <ActivityIndicator size="large" color="#2F4858" style={{ flex: 1 }} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.centerContainer}>
+          <View style={styles.statsContainer}>
+            {statItems.map((item, index) => (
+              <View key={index} style={styles.card}>
+                <View style={styles.iconContainer}>
+                  <MaterialIcons name={item.icon} size={28} color="#2F4858" />
+                </View>
+                <Text style={styles.value}>{item.value}</Text>
+                <Text style={styles.label}>{item.title}</Text>
               </View>
-              <Text style={styles.value}>{loading ? "..." : item.value}</Text>
-              <Text style={styles.label}>{item.title}</Text>
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+            ))}
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

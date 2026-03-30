@@ -93,22 +93,25 @@ def get_project(project_id):
 def update_project(project_id):
     user_id = get_jwt_identity()
 
-    project = Project.query.filter_by(
-        id=project_id,
-        user_id=user_id
-    ).first()
-
+    project = Project.query.filter_by(id=project_id, user_id=user_id).first()
     if not project:
         return jsonify({"error": "Projet non trouvé"}), 404
 
     data = request.get_json()
-
     project.name = data.get("name", project.name)
     project.description = data.get("description", project.description)
+    project.status = data.get("status", project.status)  # <-- à ajouter
 
     db.session.commit()
 
-    return jsonify({"message": "Projet mis à jour"}), 200
+    return jsonify({
+        "id": project.id,
+        "name": project.name,
+        "description": project.description,
+        "status": project.status,
+        "file_url": project.file_url,
+        "cleaned_file_url": project.cleaned_file_url
+    }), 200
 
 
 # ==============================
